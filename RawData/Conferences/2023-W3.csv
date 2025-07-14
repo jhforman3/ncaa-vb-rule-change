@@ -1,0 +1,427 @@
+﻿Team,Conference
+ Penn St.-Behrend,AMCC
+ Alfred St.,AMCC
+ Penn St.-Altoona,AMCC
+ La Roche,AMCC
+ Wells,AMCC
+ Mount Aloysius,AMCC
+ Hilbert,AMCC
+ Pitt.-Greensburg,AMCC
+ Pitt.-Bradford,AMCC
+ Neb. Wesleyan,American Rivers
+ Dubuque,American Rivers
+ Central (IA),American Rivers
+ Coe,American Rivers
+ Loras,American Rivers
+ Wartburg,American Rivers
+ Simpson,American Rivers
+ Luther,American Rivers
+ Buena Vista,American Rivers
+ Mary Hardin-Baylor,ASC
+ East Tex. Baptist,ASC
+ LeTourneau,ASC
+ Texas-Dallas,ASC
+ Hardin-Simmons,ASC
+ Howard Payne,ASC
+ Sul Ross St.,ASC
+ Concordia (TX),ASC
+ McMurry,ASC
+ Neumann,Atlantic East
+ Marymount (VA),Atlantic East
+ Centenary (NJ),Atlantic East
+ Immaculata,Atlantic East
+ Gwynedd Mercy,Atlantic East
+ Marywood,Atlantic East
+ Mary Washington,C2C
+ Salisbury,C2C
+ Chris. Newport,C2C
+ Pratt,C2C
+ UC Santa Cruz,C2C
+ Mount Mary,C2C
+ North Park,CCIW
+ Augustana (IL),CCIW
+ Millikin,CCIW
+ North Central (IL),CCIW
+ Elmhurst,CCIW
+ Carthage,CCIW
+ Ill. Wesleyan,CCIW
+ Carroll (WI),CCIW
+ Wheaton (IL),CCIW
+ Covenant,CCS
+Asbury,CCS
+Bob Jones,CCS
+ Maryville (TN),CCS
+ Berea,CCS
+ Piedmont,CCS
+ Huntingdon,CCS
+ Belhaven,CCS
+ LaGrange,CCS
+ Wesleyan (GA),CCS
+ Agnes Scott,CCS
+ Johns Hopkins,Centennial
+ Gettysburg,Centennial
+ Franklin & Marshall,Centennial
+ Swarthmore,Centennial
+ Muhlenberg,Centennial
+ McDaniel,Centennial
+ Ursinus,Centennial
+ Haverford,Centennial
+ Dickinson,Centennial
+ Washington Col.,Centennial
+ Bryn Mawr,Centennial
+ Wentworth,CNE
+ U New England,CNE
+ Nichols,CNE
+ Gordon,CNE
+ Suffolk,CNE
+ Endicott,CNE
+ Western New Eng.,CNE
+ Roger Williams,CNE
+ Hartford,CNE
+ Curry,CNE
+ Hunter,CUNYAC
+ John Jay,CUNYAC
+ Brooklyn,CUNYAC
+ Baruch,CUNYAC
+ CCNY,CUNYAC
+ York (NY),CUNYAC
+ Lehman,CUNYAC
+ Medgar Evers,CUNYAC
+ Maranatha Baptist,DIII Independent
+Warren Wilson,DIII Independent
+ Trinity Washington,DIII Independent
+ Keuka,Empire 8
+ St. John Fisher,Empire 8
+ Hartwick,Empire 8
+ Utica,Empire 8
+ Alfred,Empire 8
+ Nazareth,Empire 8
+ Houghton,Empire 8
+ Elmira,Empire 8
+ Russell Sage,Empire 8
+ Lasell,Great Northeast
+ Regis (MA),Great Northeast
+ Simmons,Great Northeast
+ Rivier,Great Northeast
+ Emmanuel (MA),Great Northeast
+ JWU (Providence),Great Northeast
+ St. Joseph's (ME),Great Northeast
+ New England Col.,Great Northeast
+ Albertus Magnus,Great Northeast
+ Dean,Great Northeast
+ Mitchell,Great Northeast
+ Saint Joseph (CT),Great Northeast
+ Colby-Sawyer,Great Northeast
+ Norwich,Great Northeast
+ Elms,Great Northeast
+ Anna Maria,Great Northeast
+ Mt. St. Joseph,HCAC
+ Transylvania,HCAC
+ Hanover,HCAC
+ Manchester,HCAC
+ Rose-Hulman,HCAC
+ Anderson (IN),HCAC
+ Earlham,HCAC
+ Franklin,HCAC
+ Bluffton,HCAC
+ Defiance,HCAC
+ Juniata,Landmark
+ Catholic,Landmark
+ Elizabethtown,Landmark
+ Scranton,Landmark
+ Lycoming,Landmark
+ Moravian,Landmark
+ Wilkes,Landmark
+ Susquehanna,Landmark
+ Drew,Landmark
+ Goucher,Landmark
+ Ithaca,Liberty League
+ Vassar,Liberty League
+ William Smith,Liberty League
+ Clarkson,Liberty League
+ Union (NY),Liberty League
+ Skidmore,Liberty League
+ Bard,Liberty League
+ RIT,Liberty League
+ St. Lawrence,Liberty League
+ Plymouth St.,Little East
+ UMass Dartmouth,Little East
+ WestConn,Little East
+ UMass Boston,Little East
+ Keene St.,Little East
+ Eastern Conn. St.,Little East
+ Rhode Island Col.,Little East
+ VTSU Castleton,Little East
+ Southern Me.,Little East
+ Eastern,MAC Commonwealth
+ Stevenson,MAC Commonwealth
+ Messiah,MAC Commonwealth
+ Widener,MAC Commonwealth
+ Albright,MAC Commonwealth
+ Alvernia,MAC Commonwealth
+ York (PA),MAC Commonwealth
+ Hood,MAC Commonwealth
+ Stevens,MAC Freedom
+ Lebanon Valley,MAC Freedom
+ Misericordia,MAC Freedom
+ FDU-Florham,MAC Freedom
+ King's (PA),MAC Freedom
+ Delaware Valley,MAC Freedom
+ Arcadia,MAC Freedom
+ DeSales,MAC Freedom
+ MCLA,MASCAC
+ Framingham St.,MASCAC
+ Worcester St.,MASCAC
+ Salem St.,MASCAC
+ Westfield St.,MASCAC
+ Fitchburg St.,MASCAC
+ Bridgewater St.,MASCAC
+ Mass. Maritime,MASCAC
+ Gustavus Adolphus,MIAC
+ St. Olaf,MIAC
+ Saint Benedict,MIAC
+ St. Catherine,MIAC
+ Concordia-M'head,MIAC
+ Augsburg,MIAC
+ Bethel (MN),MIAC
+ Hamline,MIAC
+ Saint Mary's (MN),MIAC
+ Macalester,MIAC
+ Carleton,MIAC
+ St. Scholastica,MIAC
+ Hope,Michigan Intercol. Ath. Assn.
+ Calvin,Michigan Intercol. Ath. Assn.
+ Albion,Michigan Intercol. Ath. Assn.
+ Adrian,Michigan Intercol. Ath. Assn.
+ Alma,Michigan Intercol. Ath. Assn.
+ Olivet,Michigan Intercol. Ath. Assn.
+ Trine,Michigan Intercol. Ath. Assn.
+ St. Mary's (IN),Michigan Intercol. Ath. Assn.
+ Kalamazoo,Michigan Intercol. Ath. Assn.
+ Cornell College,MWC
+ Lake Forest,MWC
+ Illinois Col.,MWC
+ Monmouth (IL),MWC
+ Grinnell,MWC
+ Ripon,MWC
+ Lawrence,MWC
+ Knox,MWC
+ Beloit,MWC
+ Edgewood,NACC
+ Aurora,NACC
+ St. Norbert,NACC
+ Lakeland,NACC
+ Marian (WI),NACC
+ Concordia Wisconsin,NACC
+ Dominican (IL),NACC
+ Benedictine (IL),NACC
+ Concordia Chicago,NACC
+ Wis. Lutheran,NACC
+ MSOE,NACC
+ Rockford,NACC
+ IIT,NACC
+ Alverno,NACC
+ Ohio Wesleyan,NCAC
+ Oberlin,NCAC
+ DePauw,NCAC
+ Wittenberg,NCAC
+ Denison,NCAC
+ Hiram,NCAC
+ Wooster,NCAC
+ Kenyon,NCAC
+ Wesleyan (CT),NESCAC
+ Colby,NESCAC
+ Trinity (CT),NESCAC
+ Middlebury,NESCAC
+ Williams,NESCAC
+ Bowdoin,NESCAC
+ Tufts,NESCAC
+ Connecticut Col.,NESCAC
+ Hamilton,NESCAC
+ Amherst,NESCAC
+ Bates,NESCAC
+ MIT,NEWMAC
+ Springfield,NEWMAC
+ Babson,NEWMAC
+ Coast Guard,NEWMAC
+ Emerson,NEWMAC
+ Clark (MA),NEWMAC
+ Smith,NEWMAC
+ Wellesley,NEWMAC
+ Wheaton (MA),NEWMAC
+ WPI,NEWMAC
+ Salve Regina,NEWMAC
+ Mount Holyoke,NEWMAC
+ Ramapo,NJAC
+ Wm. Paterson,NJAC
+ Stockton,NJAC
+ Kean,NJAC
+ Montclair St.,NJAC
+ Rutgers-Camden,NJAC
+ Rutgers-Newark,NJAC
+ Rowan,NJAC
+ New Jersey City,NJAC
+ Eastern Nazarene,North Atlantic
+ Maine Maritime,North Atlantic
+ SUNY Morrisville,North Atlantic
+ VTSU-Johnson,North Atlantic
+ SUNY Cobleskill,North Atlantic
+ Me.-Presque Isle,North Atlantic
+ Husson,North Atlantic
+ SUNY Delhi,North Atlantic
+ SUNY Canton,North Atlantic
+ VTSU Lyndon,North Atlantic
+ SUNY Poly,North Atlantic
+ Lesley,North Atlantic
+ Pacific Lutheran,NWC
+ George Fox,NWC
+ Whitworth,NWC
+ Puget Sound,NWC
+ Willamette,NWC
+ Pacific (OR),NWC
+ Linfield,NWC
+ Whitman,NWC
+ Lewis & Clark,NWC
+ Otterbein,OAC
+ Mount Union,OAC
+ Ohio Northern,OAC
+ John Carroll,OAC
+ Marietta,OAC
+ Heidelberg,OAC
+ Baldwin Wallace,OAC
+ Wilmington (OH),OAC
+ Muskingum,OAC
+ Capital,OAC
+ Va. Wesleyan,ODAC
+ Bridgewater (VA),ODAC
+ Wash. & Lee,ODAC
+ Guilford,ODAC
+ Randolph-Macon,ODAC
+ Roanoke,ODAC
+ Randolph,ODAC
+ Averett,ODAC
+ East. Mennonite,ODAC
+ Lynchburg,ODAC
+ Ferrum,ODAC
+ Shenandoah,ODAC
+ Hollins,ODAC
+ Chatham,PAC
+ Bethany (WV),PAC
+ Allegheny,PAC
+ Grove City,PAC
+ Westminster (PA),PAC
+ Franciscan,PAC
+ Wash. & Jeff.,PAC
+ Geneva,PAC
+ Saint Vincent,PAC
+ Waynesburg,PAC
+ Thiel,PAC
+ Berry,SAA
+ Centre,SAA
+ Sewanee,SAA
+ Hendrix,SAA
+ Oglethorpe,SAA
+ Millsaps,SAA
+ Rhodes,SAA
+ Birmingham-So.,SAA
+ Trinity (TX),SCAC
+ Texas Lutheran,SCAC
+ Colorado Col.,SCAC
+ Schreiner,SCAC
+ St. Thomas (TX),SCAC
+ Austin,SCAC
+ Southwestern (TX),SCAC
+ Dallas,SCAC
+ Centenary (LA),SCAC
+ La Verne,SCIAC
+ Claremont-M-S,SCIAC
+ Pomona-Pitzer,SCIAC
+ Whittier,SCIAC
+ Chapman,SCIAC
+ Cal Lutheran,SCIAC
+ Redlands,SCIAC
+ Caltech,SCIAC
+ Occidental,SCIAC
+ Manhattanville,Skyline
+ St. Joseph's (L.I.),Skyline
+ Sarah Lawrence,Skyline
+ Farmingdale St.,Skyline
+ Merchant Marine,Skyline
+ UMSV,Skyline
+ St. Joseph's (Brkln),Skyline
+ SUNY Maritime,Skyline
+ Purchase,Skyline
+ Mt. St. Mary (NY),Skyline
+ Old Westbury,Skyline
+ Yeshiva,Skyline
+ Fontbonne,SLIAC
+ Greenville,SLIAC
+ Westminster (MO),SLIAC
+ Webster,SLIAC
+ Spalding,SLIAC
+ Blackburn,SLIAC
+ MUW,SLIAC
+ Eureka,SLIAC
+Rust,SLIAC
+ Principia,SLIAC
+ Cortland,SUNYAC
+ SUNY New Paltz,SUNYAC
+ Buffalo St.,SUNYAC
+ SUNY Brockport,SUNYAC
+ SUNY Geneseo,SUNYAC
+ Plattsburgh St.,SUNYAC
+ Oswego St.,SUNYAC
+ SUNY Oneonta,SUNYAC
+ SUNY Potsdam,SUNYAC
+ Fredonia,SUNYAC
+ Emory,UAA
+ NYU,UAA
+ Carnegie Mellon,UAA
+ CWRU,UAA
+ WashU,UAA
+ Rochester (NY),UAA
+ UChicago,UAA
+ Brandeis,UAA
+ Northwestern-St. Paul,UMAC
+ Minn.-Morris,UMAC
+ Wis.-Superior,UMAC
+ North Central (MN),UMAC
+ Northland,UMAC
+ Bethany Lutheran,UMAC
+ Martin Luther,UMAC
+ Crown (MN),UMAC
+ Gallaudet,United East
+ Cedar Crest,United East
+ Lancaster Bible,United East
+ Notre Dame (MD),United East
+ Cairn,United East
+ Keystone,United East
+ St. Mary's (MD),United East
+ Penn St. Harrisburg,United East
+ Penn St.-Abington,United East
+ Saint Elizabeth,United East
+ Penn St.-Berks,United East
+ Bryn Athyn,United East
+ Penn College,United East
+ Rosemont,United East
+ Valley Forge,United East
+ Wilson,United East
+ Clarks Summit,United East
+ Meredith,USA South
+ Salem (NC),USA South
+ Greensboro,USA South
+ Methodist,USA South
+ Southern Va.,USA South
+ William Peace,USA South
+ Brevard,USA South
+ Pfeiffer,USA South
+ N.C. Wesleyan,USA South
+ Mary Baldwin,USA South
+ Wis.-Oshkosh,WIAC
+ Wis.-Whitewater,WIAC
+ Wis.-Platteville,WIAC
+ Wis.-Stout,WIAC
+ Wis.-Stevens Point,WIAC
+ UW-River Falls,WIAC
+ Wis.-Eau Claire,WIAC
+ Wis.-La Crosse,WIAC

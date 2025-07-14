@@ -1,0 +1,349 @@
+﻿Team,Conference
+ Pittsburgh,ACC
+ Stanford,ACC
+ Louisville,ACC
+ SMU,ACC
+ North Carolina,ACC
+ Florida St.,ACC
+ Georgia Tech,ACC
+ Miami (FL),ACC
+ Virginia,ACC
+ NC State,ACC
+ Boston College,ACC
+ California,ACC
+ Syracuse,ACC
+ Wake Forest,ACC
+ Notre Dame,ACC
+ Clemson,ACC
+ Duke,ACC
+ Virginia Tech,ACC
+ Bryant,America East
+ New Hampshire,America East
+ Binghamton,America East
+ UAlbany,America East
+ UMBC,America East
+ NJIT,America East
+ FGCU,ASUN
+ Eastern Ky.,ASUN
+ Lipscomb,ASUN
+ Central Ark.,ASUN
+ Jacksonville,ASUN
+ North Ala.,ASUN
+ North Florida,ASUN
+ Queens (NC),ASUN
+ West Ga.,ASUN
+ Bellarmine,ASUN
+ Stetson,ASUN
+ Austin Peay,ASUN
+ Dayton,Atlantic 10
+ VCU,Atlantic 10
+ Loyola Chicago,Atlantic 10
+ George Washington,Atlantic 10
+ Davidson,Atlantic 10
+ Duquesne,Atlantic 10
+ George Mason,Atlantic 10
+ Saint Louis,Atlantic 10
+ Rhode Island,Atlantic 10
+ Fordham,Atlantic 10
+ Arizona St.,Big 12
+ Kansas,Big 12
+ Utah,Big 12
+ Baylor,Big 12
+ TCU,Big 12
+ Arizona,Big 12
+ BYU,Big 12
+ Cincinnati,Big 12
+ Texas Tech,Big 12
+ Colorado,Big 12
+ Houston,Big 12
+ Kansas St.,Big 12
+ Iowa St.,Big 12
+ UCF,Big 12
+ West Virginia,Big 12
+ Creighton,Big East
+ UConn,Big East
+ Marquette,Big East
+ St. John's (NY),Big East
+ DePaul,Big East
+ Villanova,Big East
+ Seton Hall,Big East
+ Georgetown,Big East
+ Xavier,Big East
+ Providence,Big East
+ Butler,Big East
+ Northern Colo.,Big Sky
+ Idaho St.,Big Sky
+ Sacramento St.,Big Sky
+ Northern Ariz.,Big Sky
+ Weber St.,Big Sky
+ Eastern Wash.,Big Sky
+ Montana,Big Sky
+ Montana St.,Big Sky
+ Portland St.,Big Sky
+ Idaho,Big Sky
+ High Point,Big South
+ Winthrop,Big South
+ UNC Asheville,Big South
+ USC Upstate,Big South
+ Radford,Big South
+ Presbyterian,Big South
+ Charleston So.,Big South
+ Gardner-Webb,Big South
+ Penn St.,Big Ten
+ Nebraska,Big Ten
+ Purdue,Big Ten
+ Wisconsin,Big Ten
+ Oregon,Big Ten
+ Southern California,Big Ten
+ Minnesota,Big Ten
+ Washington,Big Ten
+ Illinois,Big Ten
+ Michigan,Big Ten
+ Indiana,Big Ten
+ UCLA,Big Ten
+ Ohio St.,Big Ten
+ Maryland,Big Ten
+ Michigan St.,Big Ten
+ Iowa,Big Ten
+ Rutgers,Big Ten
+ Northwestern,Big Ten
+ Cal Poly,Big West
+ Hawaii,Big West
+ UC Davis,Big West
+ Long Beach St.,Big West
+ UC San Diego,Big West
+ UC Irvine,Big West
+ UC Santa Barbara,Big West
+ CSU Bakersfield,Big West
+ CSUN,Big West
+ UC Riverside,Big West
+ Cal St. Fullerton,Big West
+ Towson,CAA
+ Delaware,CAA
+ Col. of Charleston,CAA
+ Hofstra,CAA
+ N.C. A&T,CAA
+ Stony Brook,CAA
+ William & Mary,CAA
+ Northeastern,CAA
+ Elon,CAA
+ UNCW,CAA
+ Campbell,CAA
+ Hampton,CAA
+ UTEP,CUSA
+ Western Ky.,CUSA
+ New Mexico St.,CUSA
+ Kennesaw St.,CUSA
+ Sam Houston,CUSA
+ Liberty,CUSA
+ Middle Tenn.,CUSA
+ Jacksonville St.,CUSA
+ Louisiana Tech,CUSA
+ FIU,CUSA
+ Wright St.,Horizon
+ Cleveland St.,Horizon
+ Milwaukee,Horizon
+ Purdue Fort Wayne,Horizon
+ Green Bay,Horizon
+ IU Indy,Horizon
+ Northern Ky.,Horizon
+ Robert Morris,Horizon
+ Youngstown St.,Horizon
+ Oakland,Horizon
+ Yale,Ivy League
+ Cornell,Ivy League
+ Princeton,Ivy League
+ Penn,Ivy League
+ Brown,Ivy League
+ Harvard,Ivy League
+ Dartmouth,Ivy League
+ Columbia,Ivy League
+ Fairfield,MAAC
+ Quinnipiac,MAAC
+ Canisius,MAAC
+ Niagara,MAAC
+ Rider,MAAC
+ Sacred Heart,MAAC
+ Iona,MAAC
+ Merrimack,MAAC
+ Saint Peter's,MAAC
+ Siena,MAAC
+ Marist,MAAC
+ Manhattan,MAAC
+ Central Mich.,MAC
+ Bowling Green,MAC
+ Ball St.,MAC
+ Western Mich.,MAC
+ Toledo,MAC
+ Buffalo,MAC
+ Ohio,MAC
+ Eastern Mich.,MAC
+ Akron,MAC
+ Miami (OH),MAC
+ NIU,MAC
+ Kent St.,MAC
+ Howard,MEAC
+ Delaware St.,MEAC
+ Coppin St.,MEAC
+ Norfolk St.,MEAC
+ UMES,MEAC
+ N.C. Central,MEAC
+ Morgan St.,MEAC
+ South Carolina St.,MEAC
+ San Diego St.,Mountain West
+ San Jose St.,Mountain West
+ Boise St.,Mountain West
+ Colorado St.,Mountain West
+ Wyoming,Mountain West
+ Fresno St.,Mountain West
+ UNLV,Mountain West
+ Utah St.,Mountain West
+ New Mexico,Mountain West
+ Nevada,Mountain West
+ Air Force,Mountain West
+ UNI,MVC
+ UIC,MVC
+ Drake,MVC
+ Valparaiso,MVC
+ Illinois St.,MVC
+ Murray St.,MVC
+ Bradley,MVC
+ Missouri St.,MVC
+ Belmont,MVC
+ Southern Ill.,MVC
+ Evansville,MVC
+ Indiana St.,MVC
+ FDU,NEC
+ Chicago St.,NEC
+ Saint Francis,NEC
+ LIU,NEC
+ Stonehill,NEC
+ Mercyhurst,NEC
+ Le Moyne,NEC
+ Central Conn. St.,NEC
+ Tennessee Tech,OVC
+ Lindenwood,OVC
+ Southeast Mo. St.,OVC
+ Western Ill.,OVC
+ Morehead St.,OVC
+ Little Rock,OVC
+ SIUE,OVC
+ Eastern Ill.,OVC
+ Tennessee St.,OVC
+ Southern Ind.,OVC
+ UT Martin,OVC
+ Bucknell,Patriot
+ American,Patriot
+ Colgate,Patriot
+ Army West Point,Patriot
+ Lehigh,Patriot
+ Loyola Maryland,Patriot
+ Lafayette,Patriot
+ Navy,Patriot
+ Holy Cross,Patriot
+ Florida,SEC
+ Kentucky,SEC
+ Texas,SEC
+ Texas A&M,SEC
+ Missouri,SEC
+ Ole Miss,SEC
+ Oklahoma,SEC
+ Arkansas,SEC
+ South Carolina,SEC
+ LSU,SEC
+ Tennessee,SEC
+ Auburn,SEC
+ Georgia,SEC
+ Mississippi St.,SEC
+ Alabama,SEC
+ Vanderbilt,SEC
+ Mercer,SoCon
+ Wofford,SoCon
+ ETSU,SoCon
+ Samford,SoCon
+ Chattanooga,SoCon
+ The Citadel,SoCon
+ Furman,SoCon
+ Western Caro.,SoCon
+ UNC Greensboro,SoCon
+ Southeastern La.,Southland
+ SFA,Southland
+ A&M-Corpus Christi,Southland
+ UIW,Southland
+ UTRGV,Southland
+ Lamar University,Southland
+ Houston Christian,Southland
+ McNeese,Southland
+ East Texas A&M,Southland
+ Northwestern St.,Southland
+ Nicholls,Southland
+Tex. A&M-Commerce,Southland
+ New Orleans,Southland
+ South Dakota St.,Summit League
+ South Dakota,Summit League
+ St. Thomas (MN),Summit League
+ Omaha,Summit League
+ Denver,Summit League
+ North Dakota St.,Summit League
+ North Dakota,Summit League
+ Kansas City,Summit League
+ Oral Roberts,Summit League
+ Arkansas St.,Sun Belt
+ Ga. Southern,Sun Belt
+ Texas St.,Sun Belt
+ App State,Sun Belt
+ Old Dominion,Sun Belt
+ Georgia St.,Sun Belt
+ South Alabama,Sun Belt
+ Marshall,Sun Belt
+ Troy,Sun Belt
+ Coastal Carolina,Sun Belt
+ James Madison,Sun Belt
+ Louisiana,Sun Belt
+ Southern Miss.,Sun Belt
+ ULM,Sun Belt
+ Florida A&M,SWAC
+ Jackson St.,SWAC
+ Bethune-Cookman,SWAC
+ Prairie View,SWAC
+ Alabama St.,SWAC
+ Grambling,SWAC
+ Texas Southern,SWAC
+ Southern U.,SWAC
+ Alabama A&M,SWAC
+ Mississippi Val.,SWAC
+ Ark.-Pine Bluff,SWAC
+ Alcorn,SWAC
+ Rice,The American
+ East Carolina,The American
+ South Fla.,The American
+ Tulsa,The American
+ Fla. Atlantic,The American
+ Wichita St.,The American
+ Tulane,The American
+ Temple,The American
+ Memphis,The American
+ UAB,The American
+ UTSA,The American
+ North Texas,The American
+ Charlotte,The American
+ UT Arlington,WAC
+ Utah Valley,WAC
+ Grand Canyon,WAC
+ Utah Tech,WAC
+ Abilene Christian,WAC
+ Southern Utah,WAC
+ Seattle U,WAC
+ California Baptist,WAC
+ Tarleton St.,WAC
+ LMU (CA),WCC
+ San Diego,WCC
+ Pepperdine,WCC
+ Pacific,WCC
+ Washington St.,WCC
+ San Francisco,WCC
+ Portland,WCC
+ Santa Clara,WCC
+ Saint Mary's (CA),WCC
+ Oregon St.,WCC
+ Gonzaga,WCC
