@@ -1,0 +1,1170 @@
+---
+title: "Reproducible Analysis of NCAA Volleyball BHE Change"
+author: "John Forman"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    toc: true
+    toc_depth: 3
+    code_folding: hide
+    df_print: paged
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include = FALSE}
+# Global chunk options and package load ---------------------------------------
+knitr::opts_chunk$set(echo = FALSE,
+                      warning = FALSE,
+                      message = FALSE
+                      )
+
+library(tidyverse)   # ggplot2, dplyr, tidyr, stringr, readr, purrr, etc.
+library(dplyr)       # data manipulation
+library(tidyr)       # data tidying
+library(stringr)     # string manipulation
+library(lubridate)   # date utilities
+library(broom)       # convert model objects into tidy tibbles
+library(fixest)      # DiD / fixed-effects models
+library(ggplot2)     # data visualization
+library(glue)        # string interpolation/helpers
+library(scales)      # formatting axis scales (percent, comma, dollar, etc.)
+library(knitr)       # simple tables for Word/PDF output
+library(kableExtra)  # enhanced styling for tables in RMarkdown
+```
+
+```{r data-import}
+# ---- 1. paths ---------------------------------------------------------------
+# ⚠️ EDIT this path to your local project folder.
+data_path <- "C:/Research/NCAA BHE Change/data/"
+
+# ---- 2. read files ----------------------------------------------------------
+matches <- read_csv(file.path(data_path, "analysis_ready_matches.csv"),
+                    show_col_types = FALSE)
+teams   <- read_csv(file.path(data_path, "analysis_ready_teams.csv"),
+                    show_col_types = FALSE)
+players <- read_csv(file.path(data_path, "analysis_ready_players.csv"),
+                    show_col_types = FALSE)
+```
+## DESCRIPTIVES
+# 1. Match-Level Overview (based on home team's division)
+```{r d-stats1}
+# Get each match’s home‐team division
+home_division <- teams %>%
+  filter(home_away == "Home") %>%
+  select(match_id, division) %>%
+  distinct()
+
+# Join it into matches
+matches <- matches %>%
+  left_join(home_division, by = "match_id")
+
+rm(home_division)
+
+
+# Match-Level Overview (teams, matches, points, attendance)
+match_summary <- matches %>%
+  group_by(season, sex, division) %>%
+  summarise(
+    Total_Matches       = n(),
+    Total_Teams         = n_distinct(home),
+    Total_Points_Played = sum(total_points, na.rm = TRUE),
+    Avg_Attendance      = mean(attendance, na.rm = TRUE),
+    SD_Attendance       = sd(attendance, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+kable(match_summary, caption = "Match-Level Overview (based on home team's division)")
+
+```
+
+# 2. Ball-Handling Errors (BHE)
+```{r d-stats2}
+# Attach each match’s total_points into every team‐row
+teams <- teams %>%
+  left_join(
+    matches %>% select(match_id, total_points),
+    by = "match_id"
+  )
+
+# Summarize everything at the team‐level, grouping by division & home/away
+summary_stats <- teams %>%
+  group_by(season, sex, division, home_away) %>%
+  summarise(
+    Total_Matches   = n_distinct(match_id),
+    Total_Points    = sum(total_points, na.rm = TRUE),
+    Total_BHE       = sum(BHE, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  # Compute BHE per point
+  mutate(
+    BHE_per_Point = Total_BHE / Total_Points
+  )
+
+# Pivot so Home/Away become separate columns for each metric
+final_table <- summary_stats %>%
+  pivot_wider(
+    names_from  = home_away,
+    values_from = c(Total_Matches, Total_Points, Total_BHE, BHE_per_Point),
+    names_glue  = "{.value}_{home_away}"
+  )
+
+kable(final_table, caption = "Match-Level Overview (based on home team's division)")
+
+```
+
+# 3. Position-Level Statistics (BHE by Setter vs Non-Setter)
+```{r d-stats3}
+# Bring total_points into players
+players <- players %>%
+  left_join(
+    matches %>% select(match_id, total_points),
+    by = "match_id"
+  )
+
+# For each match‐team and setter‐flag, collapse to one row per match:
+player_match <- players %>%
+  mutate(setter = (P == "S")) %>%
+  group_by(match_id, sex, division, season, setter) %>%
+  summarise(
+    match_BHE     = sum(BHE, na.rm = TRUE),
+    match_points  = unique(total_points),   # one value per match_id
+    .groups       = "drop"
+  )
+
+# Now aggregate across all matches by sex/division/season/setter
+tbl_setter <- player_match %>%
+  group_by(sex, division, season, setter) %>%
+  summarise(
+    Total_BHE     = sum(match_BHE,    na.rm = TRUE),
+    Total_Points  = sum(match_points, na.rm = TRUE),
+    BHE_per_Point = Total_BHE / Total_Points,
+    .groups       = "drop"
+  )
+
+kable(tbl_setter, caption = "Summarize BHE by Setter vs Non-Setter across division, sex, and season")
+```
+
+
+# 4. Rally Length (Attacks per Point)
+```{r d-stats4}
+# Aggregate total attacks per match
+rally_match <- teams %>%
+  group_by(match_id) %>%
+  summarise(total_attacks = sum(TotalAttacks, na.rm = TRUE), .groups = 'drop') %>%
+  left_join(
+    matches %>% select(match_id, total_points, attendance, season),
+    by = "match_id"
+  ) %>%
+  mutate(
+    attacks_per_point = total_attacks / total_points,
+    log_attendance    = log1p(attendance),
+    post              = as.integer(season == "2024-25")
+  )
+
+# Basic table of mean attacks per point by season
+rl_stats <- rally_match %>%
+  group_by(season) %>%
+  summarise(mean_attacks = mean(attacks_per_point, na.rm = TRUE), .groups = 'drop')
+knitr::kable(rl_stats, digits = 3, caption = 'Mean attacks per point by season')
+
+# Aggregate Total Attacks by sex, division, and season; derive attacks/rally and YoY % change
+rally_length <- teams %>%
+  group_by(season, division, sex) %>%
+  summarise(
+    # sum all attacks (home+away rows)
+    Total_Attacks = sum(TotalAttacks, na.rm = TRUE),
+    
+    # sum each match’s points only once via home_away=="Home"
+    Total_Points  = sum(
+      if_else(home_away == "Home", total_points, 0),
+      na.rm = TRUE
+    ),
+    
+    # if you still want a count of matches:
+    Total_Matches = n_distinct(match_id[home_away == "Home"]),
+    .groups       = "drop"
+  ) %>%
+  mutate(
+    Mean_Attacks_per_Point = Total_Attacks / Total_Points
+  ) %>%
+  arrange(division, sex, season) %>%
+  group_by(division, sex) %>%
+  mutate(
+    Change_YoY = 100 * (Mean_Attacks_per_Point - lag(Mean_Attacks_per_Point))
+    / lag(Mean_Attacks_per_Point)
+  ) %>%
+  ungroup()
+
+kable(rally_length, caption = "Rally Length (Attacks per Point)")
+```
+
+# 5. Scoring Patterns (Distribution of Points Scored)
+```{r d-stats5}
+scoring_distribution <- teams %>%
+# For each match, compute the opposing‐side errors
+  group_by(match_id) %>%
+  mutate(
+    Opposing_Errors = 
+      sum(BHE       [home_away != first(home_away)], na.rm = TRUE) +
+      sum(SErr      [home_away != first(home_away)], na.rm = TRUE) +
+      sum(BErr      [home_away != first(home_away)], na.rm = TRUE) +
+      sum(Errors    [home_away != first(home_away)], na.rm = TRUE)
+  ) %>%
+  ungroup() %>%
+  
+# Roll up to the season/division/sex level
+  group_by(season, division, sex) %>%
+  summarise(
+    # raw totals
+    Total_Kills   = sum(Kills,                na.rm = TRUE),
+    Total_Aces    = sum(Aces,                 na.rm = TRUE),
+    Total_Blocks  = sum(BlockSolos + BlockAssists/2, na.rm = TRUE),
+    Total_Errors  = sum(Opposing_Errors,      na.rm = TRUE),
+    # composite total
+    Total_Points  = Total_Kills + Total_Aces + Total_Blocks + Total_Errors,
+    # percentages
+    Kills              = Total_Kills  / Total_Points * 100,
+    Aces               = Total_Aces   / Total_Points * 100,
+    Blocks             = Total_Blocks / Total_Points * 100,
+    Opponent_Errors    = Total_Errors / Total_Points * 100,
+    .groups = "drop"
+  ) %>%
+  arrange(division, sex, season)
+
+kable(scoring_distribution, caption = "Distribution of Points Scored (as Percent of Total Points)")
+```
+
+# Table 1
+```{r table-1}
+# 1. Summarise by division/sex/season
+tbl1 <- teams %>%
+  group_by(division, sex, season) %>%
+  summarise(
+    # number of distinct teams
+    n           = n_distinct(Name),
+    # number of matches (count only the home side once)
+    M           = n_distinct(match_id[home_away == "Home"]),
+    # attendance mean/sd from the home rows
+    mean_att    = mean(attendance[home_away == "Home"], na.rm = TRUE),
+    sd_att      = sd(attendance[home_away == "Home"],   na.rm = TRUE),
+    # total points from the home rows (total_points already in teams)
+    total_pts   = sum(total_points[home_away == "Home"], na.rm = TRUE),
+    # BHE counts
+    bhe_home_ct = sum(BHE[home_away == "Home"],         na.rm = TRUE),
+    bhe_away_ct = sum(BHE[home_away == "Away"],         na.rm = TRUE),
+    .groups     = "drop"
+  ) %>%
+  mutate(
+    bhe_home_rate = bhe_home_ct / total_pts,
+    bhe_away_rate = bhe_away_ct / total_pts,
+    # create the grouping label
+    group = if_else(sex == "W", "Women", "Men†"),
+    # roman numeral divisions
+    Div = case_when(
+      sex=="W" & division=="D1" ~ "I",
+      sex=="W" & division=="D2" ~ "II",
+      sex=="W" & division=="D3" ~ "III",
+      sex=="M" & division=="D1" ~ "I",
+      sex=="M" & division=="D3" ~ "III"
+    ),
+    # ordering key
+    group_order = case_when(
+      sex=="W" & division=="D1" ~ 1,
+      sex=="W" & division=="D2" ~ 2,
+      sex=="W" & division=="D3" ~ 3,
+      sex=="M" & division=="D1" ~ 4,
+      sex=="M" & division=="D3" ~ 5
+    ),
+    # formatted display columns
+    `Mean Attend (SD)`  = paste0(comma(round(mean_att)),  " (", comma(round(sd_att)),  ")"),
+    `Total Pts Played`  = comma(total_pts),
+    `BHE Home (BHE/Pt)` = paste0(comma(bhe_home_ct), " (", sprintf("%.4f", bhe_home_rate), ")"),
+    `BHE Away (BHE/Pt)` = paste0(comma(bhe_away_ct), " (", sprintf("%.4f", bhe_away_rate), ")")
+  ) %>%
+  arrange(group_order, season) %>%
+  select(
+    group, Div, n, season, M,
+    `Mean Attend (SD)`,
+    `Total Pts Played`,
+    `BHE Home (BHE/Pt)`,
+    `BHE Away (BHE/Pt)`
+  ) %>%
+  rename(` ` = group)
+
+kable(
+  tbl1,
+  booktabs = TRUE,
+  caption  = "Table 1. Team and Match Characteristics by Season, Division, and Sex."
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  collapse_rows(columns = 1, valign = "top")
+```
+
+# Table 2
+```{r table-2-panelA}
+# 1. Build per-match, per-setter BHE & points
+match_setter <- players %>%
+  mutate(setter = (P == "S")) %>%
+  group_by(match_id, sex, division, season, setter) %>%
+  summarise(
+    match_BHE    = sum(BHE, na.rm = TRUE),
+    match_points = unique(total_points),
+    .groups      = "drop"
+  )
+
+# 2. Roll up to (sex,division,season,setter) & compute rate
+tbl2a_raw <- match_setter %>%
+  group_by(sex, division, season, setter) %>%
+  summarise(
+    Total_BHE    = sum(match_BHE,    na.rm = TRUE),
+    Total_Points = sum(match_points, na.rm = TRUE),
+    .groups      = "drop"
+  ) %>%
+  mutate(
+    BHE_per_Point = Total_BHE / Total_Points
+  )
+
+# 3. Bring in rally‐length metrics (Total_Attacks & Mean-per-Point + YoY)
+tbl2a <- tbl2a_raw %>%
+  left_join(
+    rally_length %>% select(sex, division, season, Total_Attacks, Mean_Attacks_per_Point, Change_YoY),
+    by = c("sex","division","season")
+  ) %>%
+  
+  # 4. Pivot setter → wide columns
+  pivot_wider(
+    names_from  = setter,
+    values_from = c(Total_BHE, Total_Points, BHE_per_Point),
+    names_glue  = "{.value}_{ifelse(setter,'Setter','NonSetter')}"
+  ) %>%
+  
+  # 5. Compute the “total” BHE/Pt as sum of the two rates
+  mutate(
+    Total_BHE_Pt = BHE_per_Point_Setter + BHE_per_Point_NonSetter
+  ) %>%
+  
+  # 6. Prepare formatting strings & YoY annotations
+  group_by(sex, division) %>%
+  arrange(sex, division, season) %>%
+  mutate(
+    # setter & non-setter rates with YoY on 2nd year
+    Setter_fmt     = sprintf("%.4f", BHE_per_Point_Setter),
+    Setter_YoY     = if_else(season=="2024-25",
+                             paste0(" (", round(100*(BHE_per_Point_Setter - lag(BHE_per_Point_Setter)) 
+                                               /lag(BHE_per_Point_Setter),1), "%)"),
+                             ""),
+    NonSetter_fmt  = sprintf("%.4f", BHE_per_Point_NonSetter),
+    NonSetter_YoY  = if_else(season=="2024-25",
+                             paste0(" (", round(100*(BHE_per_Point_NonSetter - lag(BHE_per_Point_NonSetter)) 
+                                               /lag(BHE_per_Point_NonSetter),1), "%)"),
+                             ""),
+    # total BHE/Pt
+    Total_fmt      = sprintf("%.4f", Total_BHE_Pt),
+    # Attacks/Rally with YoY annotation
+    AR_fmt         = paste0(
+                       sprintf("%.3f", Mean_Attacks_per_Point),
+                       if_else(is.na(Change_YoY),
+                               "",
+                               paste0(" (", round(Change_YoY,1), "%)")
+                       )
+                     )
+  ) %>%
+  ungroup() %>%
+  
+  # 7. Add grouping labels & Roman Div, order blocks
+  mutate(
+    group    = if_else(sex=="W","Women","Men†"),
+    Div      = case_when(
+                 sex=="W" & division=="D1" ~ "I",
+                 sex=="W" & division=="D2" ~ "II",
+                 sex=="W" & division=="D3" ~ "III",
+                 sex=="M" & division=="D1" ~ "I",
+                 sex=="M" & division=="D3" ~ "III"
+               ),
+    grp_ord  = case_when(
+                 sex=="W" & division=="D1" ~ 1,
+                 sex=="W" & division=="D2" ~ 2,
+                 sex=="W" & division=="D3" ~ 3,
+                 sex=="M" & division=="D1" ~ 4,
+                 sex=="M" & division=="D3" ~ 5
+               )
+  ) %>%
+  arrange(grp_ord, season) %>%
+  
+  # 8. Select & rename into final display
+  transmute(
+    ` `                           = group,
+    Div,
+    Season                        = season,
+    `Setter BHE/Pt (YoY % change)`    = paste0(Setter_fmt, Setter_YoY),
+    `Non-Setter BHE/Pt (YoY % change)`= paste0(NonSetter_fmt, NonSetter_YoY),
+    `Total BHE/Pt`                = Total_fmt,
+    `Total Attacks`               = comma(Total_Attacks),
+    `Attacks/Rally (YoY % change)`   = AR_fmt
+  )
+
+# 9. Render with kableExtra, collapsing the “Women”/“Men†” label
+kable(
+  tbl2a,
+  booktabs = TRUE,
+  caption  = "Table 2, Panel A: Impact on setters and rally length."
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  collapse_rows(columns = 1, valign = "top")
+```
+
+```{r table-2-panelB}
+# 1. Compute opposing‐side errors for each team‐row
+team_errors <- teams %>%
+  group_by(match_id) %>%
+  mutate(
+    Opposing_Errors = sum(
+      BHE   [home_away != first(home_away)] +
+      SErr  [home_away != first(home_away)] +
+      BErr  [home_away != first(home_away)] +
+      Errors[home_away != first(home_away)],
+      na.rm = TRUE
+    )
+  ) %>% 
+  ungroup()
+
+# 2. Summarise raw totals by sex/division/season
+dist_raw <- team_errors %>%
+  group_by(sex, division, season) %>%
+  summarise(
+    Total_Kills   = sum(Kills,                         na.rm = TRUE),
+    Total_Aces    = sum(Aces,                          na.rm = TRUE),
+    Total_Blocks  = sum(BlockSolos + BlockAssists/2,   na.rm = TRUE),
+    Total_Errors  = sum(Opposing_Errors,               na.rm = TRUE),
+    .groups       = "drop"
+  ) %>%
+  mutate(
+    Total_Pts   = Total_Kills + Total_Aces + Total_Blocks + Total_Errors,
+    kills_prop  = Total_Kills  / Total_Pts,
+    aces_prop   = Total_Aces   / Total_Pts,
+    blocks_prop = Total_Blocks / Total_Pts,
+    errs_prop   = Total_Errors / Total_Pts
+  )
+
+# 3. Format percentages with YoY for 2024-25
+dist_fmt <- dist_raw %>%
+  group_by(sex, division) %>%
+  arrange(season) %>%
+  mutate(
+    kills_fmt  = paste0(
+                    percent(kills_prop,  accuracy = 0.01),
+                    if_else(season=="2024-25",
+                            paste0(" (", round(100*(kills_prop - lag(kills_prop))/lag(kills_prop),1), "%)"),
+                            "")
+                  ),
+    aces_fmt   = paste0(
+                    percent(aces_prop,   accuracy = 0.01),
+                    if_else(season=="2024-25",
+                            paste0(" (", round(100*(aces_prop - lag(aces_prop))/lag(aces_prop),1), "%)"),
+                            "")
+                  ),
+    blocks_fmt = paste0(
+                    percent(blocks_prop, accuracy = 0.01),
+                    if_else(season=="2024-25",
+                            paste0(" (", round(100*(blocks_prop - lag(blocks_prop))/lag(blocks_prop),1), "%)"),
+                            "")
+                  ),
+    errs_fmt   = paste0(
+                    percent(errs_prop,   accuracy = 0.01),
+                    if_else(season=="2024-25",
+                            paste0(" (", round(100*(errs_prop - lag(errs_prop))/lag(errs_prop),1), "%)"),
+                            "")
+                  )
+  ) %>%
+  ungroup() %>%
+  
+  # Add grouping labels & Roman Div + ordering key
+  mutate(
+    group   = if_else(sex=="W", "Women", "Men†"),
+    Div     = case_when(
+                sex=="W" & division=="D1" ~ "I",
+                sex=="W" & division=="D2" ~ "II",
+                sex=="W" & division=="D3" ~ "III",
+                sex=="M" & division=="D1" ~ "I",
+                sex=="M" & division=="D3" ~ "III"
+              ),
+    grp_ord = case_when(
+                sex=="W" & division=="D1" ~ 1,
+                sex=="W" & division=="D2" ~ 2,
+                sex=="W" & division=="D3" ~ 3,
+                sex=="M" & division=="D1" ~ 4,
+                sex=="M" & division=="D3" ~ 5
+              )
+  ) %>%
+  arrange(grp_ord, season) %>%
+  
+  # 4. Select & rename into final display columns
+  transmute(
+    ` `                        = group,
+    Div,
+    Season                     = season,
+    `Kills (YoY % gain)`       = kills_fmt,
+    `Aces (YoY % gain)`        = aces_fmt,
+    `Blocks (YoY % gain)`      = blocks_fmt,
+    `Opponent Errors (YoY % gain)` = errs_fmt
+  )
+
+# 5. Render with collapsed “Women”/“Men†” label
+kable(
+  dist_fmt,
+  booktabs = TRUE,
+  caption  = "Table 2, Panel B: Impact on the distribution of points won"
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  collapse_rows(columns = 1, valign = "top")
+```
+
+# Interrupted Time‑Series models {-}
+## Model results
+```{r its-model}
+# Run the models and show the summary results
+its_women <- feols(BHE_per_point ~ time_index + post + time_index:post + log_attendance |
+                     Name, cluster = ~ Name, data = filter(teams, sex == "W"))
+its_men   <- feols(BHE_per_point ~ time_index + post + time_index:post + log_attendance |
+                     Name, cluster = ~ Name, data = filter(teams, sex == "M"))
+
+list(Women = summary(its_women), Men = summary(its_men))
+```
+
+## Table 3
+```{r table-3}
+# 1. Get sample sizes for the headers
+sizes <- teams %>%
+  group_by(sex) %>%
+  summarise(
+    n_matches = n_distinct(match_id),
+    n_teams   = n_distinct(Name),
+    .groups   = "drop"
+  )
+women_sizes <- sizes %>% filter(sex=="W")
+men_sizes   <- sizes %>% filter(sex=="M")
+women_lbl   <- glue("Women (n={comma(women_sizes$n_matches)}; teams={comma(women_sizes$n_teams)})")
+men_lbl     <- glue("Men   (n={comma(men_sizes$n_matches)}; teams={comma(men_sizes$n_teams)})")
+
+# 2. Tidy up each model
+tw <- tidy(its_women, conf.int=FALSE) %>%
+  select(term, estimate, std.error) %>%
+  rename(Est_W = estimate, SE_W = std.error)
+
+tm <- tidy(its_men, conf.int=FALSE) %>%
+  select(term, estimate, std.error) %>%
+  rename(Est_M = estimate, SE_M = std.error)
+
+# 3. Combine and format into a display table
+tbl3 <- tw %>%
+  inner_join(tm, by="term") %>%
+  # keep only the four rows you care about, in order
+  filter(term %in% c("time_index","post","time_index:post","log_attendance")) %>%
+  mutate(
+    ` `      = c("Time index", "Post-rule", "Time × Post", "log(Attendance)"),
+    Est_W    = sprintf("%.4f", Est_W),
+    SE_W     = sprintf("(%.4f)", SE_W),
+    Est_M    = sprintf("%.4f", Est_M),
+    SE_M     = sprintf("(%.4f)", SE_M)
+  ) %>%
+  select(` `, Est_W, SE_W, Est_M, SE_M)
+
+# 4. Render with kableExtra, adding the top‐spanning header
+kable(
+  tbl3,
+  booktabs = TRUE,
+  col.names = c("", "β", "SE", "β", "SE"),
+  caption   = "Table 3. Interrupted time‐series estimates for BHE per point."
+) %>%
+  add_header_above(c(
+    " "        = 1,
+    setNames(2, women_lbl),
+    setNames(2, men_lbl)
+  )) %>%
+  kable_styling(full_width = FALSE)
+```
+
+## Pre/Post BHE Trends by Sex & Season plot (Appendix Figure A1)
+```{r its-plot, fig.cap='Weekly mean BHE per point (solid) with segmented OLS fit (dotted)', echo=FALSE}
+# 1. Aggregate BHE per point by calendar week --------------------------------
+bhe_week <- teams %>%
+  mutate(week = floor_date(match_date, unit = "week", week_start = 1)) %>%
+  group_by(sex, week) %>%
+  summarise(BHE = mean(BHE_per_point, na.rm = TRUE), .groups = "drop")
+
+# 2. Create prediction data from ITS models -----------------------------
+first_date <- min(matches$match_date, na.rm = TRUE)
+
+# pick one existing team name per sex (for dummy FE column)
+dummy_names <- teams %>% distinct(sex, Name) %>% group_by(sex) %>% slice(1) %>% ungroup()
+
+pred_grid <- bhe_week %>%
+  mutate(time_index = as.numeric(difftime(week, first_date, units = "days")),
+         post       = as.integer(week >= as.Date("2024-08-01")),
+         log_attendance = 0) %>%              # hold attendance at 0
+  left_join(dummy_names, by = "sex")         # supplies 'Name' column
+
+pred_w <- pred_grid %>%
+  filter(sex == "W") %>%
+  mutate(pred = predict(its_women, newdata = ., fixef = FALSE))
+
+pred_m <- pred_grid %>%
+  filter(sex == "M") %>%
+  mutate(pred = predict(its_men, newdata = ., fixef = FALSE))
+
+pred_all <- bind_rows(pred_w, pred_m)
+
+# 3. Plot --------------------------------------------------------------------
+ggplot() +
+  geom_line(data = bhe_week, aes(week, BHE, colour = sex), size = 0.6) +
+  geom_line(data = pred_all, aes(week, pred, colour = sex), linetype = "dotted", size = 0.8) +
+  geom_vline(xintercept = as.Date("2024-08-01"), linetype = "dashed") +
+  scale_colour_manual(values = c("M" = "#0072B2", "W" = "#D55E00"), labels = c("Men", "Women")) +
+  scale_y_continuous(labels = label_number(accuracy = 0.0001)) +
+  labs(x = "Week (Monday start)", y = "BHE per point", colour = "Sex", title   = "Pre/Post BHE Trends by Sex & Season") +
+  theme_minimal(base_size = 11) +
+  theme(legend.position = "top")
+```
+
+# Position-based Difference-in-Differences (Setter vs Other) {-}
+## Model results
+
+```{r setter-did}
+# 1. Create df with aggregated rows for setters and non-setters for each team each match
+setter_match <- players %>%
+   # flag Setters vs non-Setters
+   mutate(setter = (P == "S")) %>%
+   
+  # aggregate at match × team (Name) × setter-status
+  group_by(match_id, season, Name, setter) %>%
+  summarise(
+    total_BHE = sum(BHE, na.rm = TRUE),
+    .groups   = "drop"
+  ) %>%
+  
+   # bring in log_attendance, home_away & total_points from teams
+  left_join(
+    teams %>%
+      select(match_id, Name, home_away, total_points, log_attendance),
+    by = c("match_id", "Name")
+  ) %>%
+  
+   # compute per-point rate & post indicator
+  mutate(
+    BHE_per_point = total_BHE / total_points,
+    post          = as.integer(season == "2024-25")
+  )
+
+
+# 2. Run DiD model: fixed effects for match + season -------------------------
+setter_did <- feols(BHE_per_point ~ setter * post + home_away + log_attendance |
+                     match_id + season,
+                   cluster = ~ match_id,
+                   data = setter_match)
+
+summary(setter_did)
+```
+
+## Table 4
+```{r table-4}
+# 1. Tidy the DiD model, extracting clustered SEs, 95% CIs, and p‐values
+tbl4 <- tidy(setter_did, conf.int = TRUE) %>%
+  # keep only the three terms you care about
+  filter(term %in% c("setterTRUE", "home_awayHome", "setterTRUE:post")) %>%
+  
+# 2. Relabel and format
+  transmute(
+    Predictor        = case_when(
+                         term == "setterTRUE"     ~ "Setter (1 / 0)",
+                         term == "home_awayHome"   ~ "Home team (1 / 0)",
+                         term == "setterTRUE:post" ~ "Setter × Post‐rule"
+                       ),
+    β                = sprintf("%.6f", estimate),
+    `SE (clustered)` = sprintf("%.6f", std.error),
+    `95% CI`         = paste0(
+                         sprintf("%.6f", conf.low), " – ",
+                         sprintf("%.6f", conf.high)
+                       ),
+    p                = if_else(
+                         p.value < 0.001,
+                         "< 0.001",
+                         sprintf("%.3f", p.value)
+                       )
+  )
+
+# 3. Render with kableExtra
+kable(
+  tbl4,
+  booktabs = TRUE,
+  caption  = "Table 4. Difference‐in‐Differences Estimates: Setter vs Non‐Setter"
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+# Weekly mean BHE per point, Setters vs Others (Appendix Figure A2)
+```{r setter-non-pre-post, fig.cap='Pre/Post BHE Trends by Position & Season', echo=FALSE}
+# Prepare data
+player_match$BHE_per_point <- player_match$match_BHE/player_match$match_points
+
+setter_ts4 <- player_match %>%
+  left_join(matches %>% select(match_id, match_date), by = "match_id") %>%
+  mutate(
+    week   = floor_date(match_date, "week"),
+    season = factor(season, levels = c("2023-24","2024-25")),
+    sex    = factor(sex,    levels = c("W","M"), labels = c("Women","Men"))
+  ) %>%
+  group_by(sex, season, week, setter) %>%
+  summarise(mean_BHE = mean(BHE_per_point, na.rm = TRUE), .groups="drop")
+
+# Plot
+ggplot(setter_ts4, aes(x = week, y = mean_BHE, color = setter)) +
+  geom_line(size = 1) +
+  geom_vline(xintercept = as.Date("2024-08-01"), linetype = "dashed") +
+  facet_grid(sex ~ season, scales = "free_x") +
+  scale_color_manual(
+    values = c("FALSE" = "grey50", "TRUE" = "darkgreen"),
+    labels = c("Other", "Setter")
+  ) +
+  scale_y_continuous(
+    labels = label_number(accuracy = 0.0005),  # e.g. 0.000, 0.001, 0.0015
+    expand = expansion(mult = c(0, .05))
+  ) +
+  labs(
+    x     = "Week",
+    y     = "Mean BHE per Point",
+    color = "Position",
+    title = "Pre/Post BHE Trends by Position & Season"
+    # subtitle removed
+  ) +
+  theme_minimal() +
+  theme(
+    strip.text      = element_text(face = "bold", size = 12),
+    legend.position = "bottom",
+    axis.text.x     = element_text(angle = 45, hjust = 1),
+    panel.spacing   = unit(1, "lines")
+  )
+```
+
+# BHE by Position before/after rule change {-}
+## Appendix Figure A2
+```{r by-position}
+# 1. Total points per season
+season_points <- matches %>%
+  group_by(season) %>%
+  summarize(
+    total_points = sum(total_points, na.rm = TRUE)
+  )
+
+# 2. Total BHE by season & position
+pos_bhe <- players %>%
+  group_by(season, P) %>%
+  summarize(
+    total_BHE = sum(BHE, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# 3. Compute BHE per point by joining
+pos_rates_by_season <- pos_bhe %>%
+  left_join(season_points, by = "season") %>%
+  mutate(
+    BHE_per_point = total_BHE / total_points
+  ) %>%
+  arrange(season, P)
+
+bhe_long <- bind_rows(
+  # Total BHE
+  pos_bhe %>%
+    transmute(
+      position = P,
+      season,
+      metric   = "nominal_BHE",
+      value    = total_BHE
+    ),
+  # BHE per Rally
+  pos_rates_by_season %>%
+    transmute(
+      position = P,
+      season,
+      metric   = "BHE_per_point",
+      value    = BHE_per_point
+    )
+)
+
+# 4. Plot side-by-side bars for each metric
+ggplot(bhe_long, aes(x = position, y = value, fill = season)) +
+  geom_col(position = position_dodge(width = 0.8), width = 0.7) +
+  facet_wrap(
+        ~ metric,
+        scales   = "free_y",
+        labeller = as_labeller(c(
+            nominal_BHE   = "Total BHE",
+            BHE_per_point = "BHE per Point"    
+          ))
+      ) +
+  scale_fill_brewer(type = "qual", palette = "Dark2") +
+  labs(
+    x     = "Player Position",
+    y     = NULL,
+    fill  = "Season",
+    title = "BHE by position before and after the NCAA rule change"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    axis.text.x      = element_text(angle = 30, hjust = 1),
+    panel.grid.minor = element_blank()
+  )
+```
+
+## DiD Estimates by Player Position (2024–25 vs 2023–24) model results
+```{r player-positions}
+# 1. Create a table of position values aggregated at the match level
+player_position <- players %>%
+  # bring in match‐level total_points, attendance & season
+  left_join(
+    matches %>% select(match_id, attendance),
+    by = "match_id"
+  ) %>%
+  # compute controls
+  mutate(
+    log_attendance = log1p(attendance),
+    post           = as.integer(season == "2024-25")
+  ) %>%
+  # aggregate BHE by match × position
+  group_by(
+    match_id,
+    season,
+    P,               # your position code
+    post,
+    log_attendance
+  ) %>%
+  summarise(
+    match_BHE    = sum(BHE,           na.rm = TRUE),
+    match_points = unique(total_points),
+    .groups      = "drop"
+  ) %>%
+  # outcome per point
+  mutate(
+    BHE_per_point = match_BHE / match_points
+  ) %>%
+  # make P a factor with setter as reference
+  mutate(
+    P = relevel(factor(P), ref = "S")
+  )
+
+# 3. Fit the DiD model as in earlier model, with P in place of setter
+did_position <- feols(
+  BHE_per_point ~ post * P + log_attendance |
+    match_id + season,
+  cluster = ~ match_id,
+  data    = player_position
+)
+summary(did_position)
+
+# 3. Extract only the post:P interaction terms (i.e. the DiD estimates for each position)
+did_pos_tbl <- broom::tidy(did_position, conf.int = TRUE) %>%
+  filter(str_detect(term, "^post:P")) %>%
+  mutate(
+    Position    = str_remove(term, "^post:P"),
+    Estimate    = round(estimate,  4),
+    `Std. Error`= round(std.error,  4),
+    `CI Lower`  = round(conf.low,   4),
+    `CI Upper`  = round(conf.high,  4),
+    `p-value`   = round(p.value,    4)
+  ) %>%
+  select(Position, Estimate, `Std. Error`, `CI Lower`, `CI Upper`, `p-value`)
+
+# 4. Render as a table
+knitr::kable(
+  did_pos_tbl,
+  caption = "DiD Estimates by Player Position (2024–25 vs 2023–24)",
+  align   = c("l", rep("r", 5))
+)
+```
+
+## Table 5
+```{r table-5-position}
+# 1.  Create preliminary table
+tbl5_rates <- pos_rates_by_season %>%
+  # ensure exactly one BHE_per_point per P×season
+  group_by(P, season) %>%
+  summarise(
+    BHE_rate = unique(BHE_per_point),
+    .groups = "drop"
+  ) %>%
+  # now pivot to wide so each P has exactly two columns
+  pivot_wider(
+    names_from  = season,
+    values_from = BHE_rate
+  ) %>%
+  # rename for your table headers
+  rename(
+    `2023–24 BHE/pt` = `2023-24`,
+    `2024–25 BHE/pt` = `2024-25`
+  ) %>%
+  # compute the deltas
+  mutate(
+    `Absolute Δ` = `2024–25 BHE/pt` - `2023–24 BHE/pt`,
+    `Relative Δ` = (`Absolute Δ` / `2023–24 BHE/pt`) * 100
+  )
+
+# 2.  Pull out post:P interactions
+interacts <- tidy(did_position, conf.int = TRUE) %>%
+  filter(str_detect(term, "^post:P")) %>%
+  transmute(
+    P        = str_remove(term, "^post:P"),
+    estimate,
+    conf.low,
+    conf.high,
+    p.value
+  )
+
+tbl5 <- tbl5_rates %>%
+  left_join(interacts, by = "P") %>%
+  transmute(
+    Position                  = P,
+    `2023–24 BHE/pt`          = sprintf("%.6f", `2023–24 BHE/pt`),
+    `2024–25 BHE/pt`          = sprintf("%.6f", `2024–25 BHE/pt`),
+    `Absolute Δ`              = sprintf("%+.6f", `Absolute Δ`),
+    `Relative Δ`              = sprintf("%+.1f%%", `Relative Δ`),
+    `DiD vs Setter (Δ BHE/pt, 95% CI)` = if_else(
+      Position == "S",
+      "—",
+      paste0(
+        sprintf("%+.5f", estimate),
+        " [", sprintf("%+.5f", conf.low), ", ", sprintf("%+.5f", conf.high), "]",
+        case_when(
+          p.value < 0.001 ~ "***",
+          p.value < 0.01  ~ "**",
+          p.value < 0.05  ~ "*",
+          p.value < 0.10  ~ "†",
+          TRUE            ~ ""
+        )
+      )
+    )
+  ) %>%
+  # Put S first in order
+  mutate(
+    Position = factor(
+      Position,
+      levels = c("S", setdiff(unique(Position), "S"))
+    ),
+    # Relabel only the setter
+    Position = fct_recode(Position, "S (ref)" = "S")
+  ) %>%
+  arrange(Position)
+
+# 3. Render
+kable(
+  tbl5,
+  booktabs = TRUE,
+  caption = "Table 5. Change in BHE per Point by Position with DiD vs Setter"
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+
+# Home‑Bias Attenuation {-}
+## Model results
+
+```{r home-bias}
+# 1. Compute home‑away difference per match
+match_diff <- teams %>%
+  group_by(match_id, season) %>%
+  summarise(
+    bhe_home = BHE_per_point[home_away == "Home"],
+    bhe_away = BHE_per_point[home_away == "Away"],
+    log_attendance = unique(log_attendance),
+    post = unique(post),
+    .groups = "drop"
+  ) %>%
+  mutate(bhe_diff = bhe_away - bhe_home)
+
+# 2. Fit model
+hb_model <- feols(
+  bhe_diff ~ post + log_attendance,
+  cluster = ~ match_id,
+  data    = match_diff
+)
+
+# 3. Display results
+summary(hb_model)
+```
+
+## Table 6
+```{r table-6}
+# Get the fixest coeftable (with clustered SEs)
+fe_summ <- summary(hb_model)              # this has the clustered SEs you saw
+ct      <- fe_summ$coeftable            # matrix with Estimate, Std. Error, t, Pr(>|t|)
+# Get the confints the same way
+cis     <- confint(hb_model, level = 0.95)  # two-column matrix: 2.5% and 97.5%
+
+# Assemble the table
+tbl_ha <- tibble(
+  Predictor      = c("Intercept", "Post-rule (1 / 0)", "log(Attendance)"),
+  beta           = ct[,"Estimate"],
+  se_clustered   = ct[,"Std. Error"],
+  ci_lower       = cis[,1],
+  ci_upper       = cis[,2],
+  pval           = ct[,"Pr(>|t|)"]
+) %>%
+  transmute(
+    Predictor,
+    beta         = sprintf("%.6f", beta),
+    se_clustered = sprintf("%.6f", se_clustered),
+    ci95         = paste0(sprintf("%.6f", ci_lower), " – ",
+                          sprintf("%.6f", ci_upper)),
+    p            = if_else(pval < 0.001, "< 0.001", sprintf("%.3f", pval))
+  )
+
+# Render with kableExtra
+kable(
+  tbl_ha,
+  booktabs  = TRUE,
+  caption   = "Table 6. Home–Away Difference Model for BHE per Point)",
+  col.names = c("Predictor", "β", "SE (clustered)", "95% CI", "p")
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+# Rally-Length Analysis {-}
+## Model results
+
+```{r rally-length}
+# 1. Aggregate total attacks per match
+rally_match <- teams %>%
+  group_by(match_id) %>%
+  summarise(total_attacks = sum(TotalAttacks, na.rm = TRUE), .groups = 'drop') %>%
+  left_join(
+    matches %>% select(match_id, total_points, attendance, season),
+    by = "match_id"
+  ) %>%
+  mutate(
+    attacks_per_point = total_attacks / total_points,
+    log_attendance    = log1p(attendance),
+    post              = as.integer(season == "2024-25")
+  )
+
+# 2. Descriptive: mean attacks per point by season
+rl_stats <- rally_match %>%
+  group_by(season) %>%
+  summarise(mean_attacks = mean(attacks_per_point, na.rm = TRUE), .groups = 'drop')
+knitr::kable(rl_stats, digits = 3, caption = 'Mean attacks per point by season')
+
+# 3. Model: effect of rule change on rally length
+rl_mod <- feols(attacks_per_point ~ post + log_attendance | 0,
+                 cluster = ~ match_id,
+                 data = rally_match)
+summary(rl_mod)
+```
+
+## Table 7
+```{r table-7}
+# Get the fixest coeftable (with clustered SEs)
+fe_summ <- summary(rl_mod)              # this has the clustered SEs you saw
+ct      <- fe_summ$coeftable            # matrix with Estimate, Std. Error, t, Pr(>|t|)
+# Get the confints the same way
+cis     <- confint(rl_mod, level = 0.95)  # two-column matrix: 2.5% and 97.5%
+
+# Assemble the table
+tbl_rl <- tibble(
+  Predictor      = c("Intercept", "Post-rule (1 / 0)", "log(Attendance)"),
+  beta           = ct[,"Estimate"],
+  se_clustered   = ct[,"Std. Error"],
+  ci_lower       = cis[,1],
+  ci_upper       = cis[,2],
+  pval           = ct[,"Pr(>|t|)"]
+) %>%
+  transmute(
+    Predictor,
+    beta         = sprintf("%.6f", beta),
+    se_clustered = sprintf("%.6f", se_clustered),
+    ci95         = paste0(sprintf("%.6f", ci_lower), " – ",
+                          sprintf("%.6f", ci_upper)),
+    p            = if_else(pval < 0.001, "< 0.001", sprintf("%.3f", pval))
+  )
+
+# Render with kableExtra
+kable(
+  tbl_rl,
+  booktabs  = TRUE,
+  caption   = "Table 7. Effect of Rule Change on Rally Length (Attacks per Point)",
+  col.names = c("Predictor", "β", "SE (clustered)", "95% CI", "p")
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+# Supplementary Table S1 {-}
+```{r supp-table-s1}
+# 1. Summarize matches (matches, sets, rallies)
+match_sum <- matches %>%
+  group_by(sex, division, season) %>%
+  summarise(
+    Matches = n_distinct(match_id),
+    Sets    = sum(sets_played,   na.rm = TRUE),
+    Rallies = sum(total_points,  na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# 2. Summarize teams (teams count, total BHE)
+team_sum <- teams %>%
+  group_by(sex, division, season) %>%
+  summarise(
+    Teams     = n_distinct(Name),
+    Total_BHE = sum(BHE, na.rm = TRUE),
+    .groups   = "drop"
+  )
+
+# 3. Join and label
+suppS1 <- team_sum %>%
+  left_join(match_sum, by = c("sex","division","season")) %>%
+  mutate(
+    Sex      = factor(sex, levels = c("W","M"), labels = c("Women","Men")),
+    Division = case_when(
+      sex=="W" & division=="D1" ~ "I",
+      sex=="W" & division=="D2" ~ "II",
+      sex=="W" & division=="D3" ~ "III",
+      sex=="M" & division=="D1" ~ "I",
+      sex=="M" & division=="D3" ~ "III"
+    ),
+    Season   = season
+  ) %>%
+  select(Sex, Division, Season, Teams, Matches, Sets, Rallies, Total_BHE)
+
+# 4. Add the overall Total row and order the rows
+total_row <- tibble(
+  Sex       = "Total",
+  Division  = "\u2014",
+  Season    = "\u2014",
+  Teams     = sum(suppS1$Teams)/2,
+  Matches   = sum(suppS1$Matches),
+  Sets      = sum(suppS1$Sets),
+  Rallies   = sum(suppS1$Rallies),
+  Total_BHE = sum(suppS1$Total_BHE)
+)
+
+suppS1 <- bind_rows(suppS1, total_row)
+
+suppS1 <- suppS1 %>%
+  mutate(
+    Teams     = scales::comma(Teams),
+    Matches   = scales::comma(Matches),
+    Sets      = scales::comma(Sets),
+    Rallies   = scales::comma(Rallies),
+    Total_BHE = scales::comma(Total_BHE),
+    Sex       = factor(Sex, levels = c("Women","Men","Total")),
+    Season    = factor(Season, levels = c("2023-24","2024-25","—")),
+    Division  = factor(Division, levels = c("I","II","III","—"))
+  ) %>%
+  arrange(Sex, Season, Division)
+
+# 5. Render
+kable(
+  suppS1,
+  booktabs = TRUE,
+  col.names = c("Sex","Division","Season","Teams","Matches","Sets","Rallies","Total BHE"),
+  caption = "Supplemental Table S1. Sample counts by sex, division, and season."
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  collapse_rows(columns = 1, valign = "top")
+```
